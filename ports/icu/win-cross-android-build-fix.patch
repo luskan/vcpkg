@@ -1,0 +1,76 @@
+diff --git a/source/configure.ac b/source/configure.ac
+index c508f48..66d7918 100644
+--- a/source/configure.ac
++++ b/source/configure.ac
+@@ -80,6 +80,38 @@ AC_MSG_RESULT([release $VERSION, library $LIB_VERSION, unicode version $UNICODE_
+ 
+ AC_SUBST(UNICODE_VERSION)
+ 
++if test -z "$build"; then
++    case "@S|@(uname -s)" in
++        MSYS*|MINGW*) build="x86_64-pc-msys" ;;
++        *) build=@S|@(uname -m)-pc-@S|@(uname -s | tr '[:upper:]' '[:lower:]') ;;
++    esac
++fi
++AC_MSG_NOTICE([Configuring for build: @S|@build, host: @S|@host])
++if echo "@S|@build" | grep -E -q "msys|mingw32" && echo "@S|@host" | grep -q "android"; then
++    #USE_WIN_WRAPPER=no
++    AC_MSG_NOTICE([Configuring for build: using win crosscompile path fix wrapper])
++    USE_WIN_WRAPPER=yes
++    AC_CONFIG_COMMANDS_PRE([
++       echo '#!/bin/bash' > win_cross_path_fix_wrapper.sh
++       echo '#printf '\''win_cross_path_fix_wrapper: ARGS: %s\n'\'' "@S|@@" >&2' >> win_cross_path_fix_wrapper.sh
++       echo 'CMD="@S|@1"; shift' >> win_cross_path_fix_wrapper.sh
++       echo 'FIXED_ARGS=()' >> win_cross_path_fix_wrapper.sh
++       echo 'for ARG in "@S|@@"; do' >> win_cross_path_fix_wrapper.sh
++       echo '    [[[ "@S|@ARG" == *"uconvmsguconvmsg"* ]]] && ARG="@S|@{ARG//uconvmsguconvmsg/uconvmsg\/uconvmsg}"' >> win_cross_path_fix_wrapper.sh
++       echo '    [[[ "@S|@ARG" == *".lib"* ]]] && ARG="@S|@{ARG//.lib/.a}"' >> win_cross_path_fix_wrapper.sh
++       echo '    [[[ "@S|@ARG" == *"icudtd.lib"* ]]] && exit 1' >> win_cross_path_fix_wrapper.sh
++       echo '    FIXED_ARGS+=("@S|@ARG")' >> win_cross_path_fix_wrapper.sh
++       echo 'done' >> win_cross_path_fix_wrapper.sh
++       echo '#printf '\''win_cross_path_fix_wrapper: FIXED_ARGS: %s\n'\'' "@S|@{FIXED_ARGS[[@]]}" >&2' >> win_cross_path_fix_wrapper.sh
++       echo '"$CMD" "${FIXED_ARGS[[@]]}"' >> win_cross_path_fix_wrapper.sh
++       chmod +x win_cross_path_fix_wrapper.sh
++   ])
++else
++    AC_MSG_NOTICE([Configuring for build: NOT using win crosscompile path fix wrapper])
++    USE_WIN_WRAPPER=no
++fi
++AC_SUBST(USE_WIN_WRAPPER)
++
+ # Determine the host system
+ AC_CANONICAL_HOST
+ 
+diff --git a/source/icudefs.mk.in b/source/icudefs.mk.in
+index 0d7e3bd..a0e0839 100644
+--- a/source/icudefs.mk.in
++++ b/source/icudefs.mk.in
+@@ -96,11 +96,14 @@ pkgdatadir = $(datadir)/$(PACKAGE)$(ICULIBSUFFIX)/$(VERSION)
+ pkglibdir = $(libdir)/$(PACKAGE)$(ICULIBSUFFIX)/$(VERSION)
+ pkgsysconfdir = $(sysconfdir)/$(PACKAGE)$(ICULIBSUFFIX)
+ 
++# Wraper for platform tools, fixes paths for cross-compilation on windows to android
++WRAP_PREFIX = $(if $(filter yes,@USE_WIN_WRAPPER@),$(top_builddir)/win_cross_path_fix_wrapper.sh,)
++
+ # Installation programs
+ 
+ MKINSTALLDIRS = $(SHELL) $(top_srcdir)/mkinstalldirs
+ 
+-INSTALL = @INSTALL@
++INSTALL = $(WRAP_PREFIX) @INSTALL@
+ INSTALL_PROGRAM = @INSTALL_PROGRAM@
+ INSTALL_DATA = @INSTALL_DATA@
+ INSTALL_SCRIPT = @INSTALL_SCRIPT@
+@@ -114,9 +117,9 @@ ICULIBSUFFIX=@ICULIBSUFFIX@
+ ENABLE_DEBUG = @ENABLE_DEBUG@
+ ENABLE_RELEASE = @ENABLE_RELEASE@
+ EXEEXT = @EXEEXT@
+-CC = @CC@
+-CXX = @CXX@
+-AR = @AR@
++CC = $(WRAP_PREFIX) @CC@
++CXX = $(WRAP_PREFIX) @CXX@
++AR = $(WRAP_PREFIX) @AR@
+ ARFLAGS = @ARFLAGS@ r
+ RANLIB = @RANLIB@
+ COMPILE_LINK_ENVVAR = @COMPILE_LINK_ENVVAR@

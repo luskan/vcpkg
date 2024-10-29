@@ -23,6 +23,7 @@ vcpkg_extract_source_archive(SOURCE_PATH
         darwin-rpath.patch
         mingw-strict-ansi.diff # backport of https://github.com/unicode-org/icu/pull/3003
         cleanup_msvc.patch
+        win-cross-android-build-fix.patch
 )
 
 vcpkg_find_acquire_program(PYTHON3)
