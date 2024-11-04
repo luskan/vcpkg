@@ -13,6 +13,7 @@ vcpkg_from_github(
         graphite.patch
         vulkan-headers.patch
         pdfsubsetfont-uwp.diff
+		fix-ninja-cmd-parenths.patch
 )
 
 # De-vendor
