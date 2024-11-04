@@ -14,6 +14,7 @@ vcpkg_from_github(
         vulkan-headers.patch
         pdfsubsetfont-uwp.diff
         skparagraph-dllexport.patch
+        fix-ninja-cmd-parenths.patch
 )
 
 # De-vendor
