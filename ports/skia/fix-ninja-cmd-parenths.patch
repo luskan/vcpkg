@@ -2,12 +2,17 @@ diff --git a/gn/toolchain/BUILD.gn b/gn/toolchain/BUILD.gn
 index e7264b5..7695347 100644
 --- a/gn/toolchain/BUILD.gn
 +++ b/gn/toolchain/BUILD.gn
-@@ -324,7 +324,7 @@ template("gcc_like_toolchain") {
+@@ -324,7 +324,12 @@ template("gcc_like_toolchain") {
          rspfile = "{{output}}.rsp"
          rspfile_content = "{{inputs}}"
          rm_py = rebase_path("../rm.py")
 -        command = "$shell python3 \"$rm_py\" \"{{output}}\" && $ar rcs {{output}} @$rspfile"
-+        command = "$shell \"python3 \"$rm_py\" \"{{output}}\" && $ar rcs {{output}} @$rspfile\""
++        if (host_os == "win") {
++          command = "$shell \"python3 \"$rm_py\" \"{{output}}\" && $ar rcs {{output}} @$rspfile\""
++        }
++        else {
++         command = "$shell python3 \"$rm_py\" \"{{output}}\" && $ar rcs {{output}} @$rspfile"
++        }
        }
  
        outputs =
