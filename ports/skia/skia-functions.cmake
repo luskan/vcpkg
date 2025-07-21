@@ -1,7 +1,7 @@
 # Declare a named external dependency for download with vcpkg_from_git,
 # and validate against upstream's DEPS.
 function(declare_external_from_git name)
-    cmake_parse_arguments(PARSE_ARGV 1 arg "" "URL;REF;LICENSE_FILE" "")
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "URL;REF;FETCH_REF;LICENSE_FILE" "")
     if(NOT arg_URL OR NOT arg_REF OR NOT arg_LICENSE_FILE)
         message(FATAL_ERROR "Arguments URL, REF and LICENSE_FILE are required.")
     endif()

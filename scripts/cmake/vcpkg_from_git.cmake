@@ -125,30 +125,32 @@ function(vcpkg_from_git)
         vcpkg_execute_in_download_mode(
             COMMAND "${GIT}" rev-parse "${expected_rev_parse}"
             OUTPUT_VARIABLE rev_parse_ref
-            ERROR_VARIABLE rev_parse_ref
+            ERROR_VARIABLE rev_parse_error
             RESULT_VARIABLE error_code
             WORKING_DIRECTORY "${git_working_directory}"
         )
+        
+        # Strip any whitespace from the output
+        string(STRIP "${rev_parse_ref}" rev_parse_ref)
 
         if(error_code)
             if(VCPKG_USE_HEAD_VERSION)
                 message(FATAL_ERROR "Unable to determine the commit SHA of the HEAD version to use after \
-fetching ${ref_to_fetch} from the git repository. (git rev-parse ${expected_rev_parse} failed)")
+fetching ${ref_to_fetch} from the git repository. (git rev-parse ${expected_rev_parse} failed: ${rev_parse_error})")
             elseif(DEFINED arg_FETCH_REF)
                 message(FATAL_ERROR "After fetching ${ref_to_fetch}, the target ref ${expected_rev_parse} appears \
 inaccessible. A common cause of this failure is setting REF to a named branch or tag rather than a commit SHA. REF \
-must be a commit SHA. (git rev-parse ${expected_rev_parse} failed)")
+must be a commit SHA. (git rev-parse ${expected_rev_parse} failed: ${rev_parse_error})")
             else()
                 message(FATAL_ERROR "After fetching ${ref_to_fetch}, the target ref ${expected_rev_parse} appears \
 inaccessible. A common cause of this failure is setting REF to a named branch or tag rather than a commit SHA. REF \
 must be a commit SHA. If the git server does not advertise commit SHAs \
 (uploadpack.allowReachableSHA1InWant is false), you can set FETCH_REF to a named branch in which the desired commit \
 SHA is in the history. For example, you may be able to fix this error by changing \"REF ${arg_REF}\" to \
-\"REF a-commit-sha FETCH_REF ${arg_REF}\". (git rev-parse ${expected_rev_parse} failed)")
+\"REF a-commit-sha FETCH_REF ${arg_REF}\". (git rev-parse ${expected_rev_parse} failed: ${rev_parse_error})")
             endif()
         endif()
 
-        string(STRIP "${rev_parse_ref}" rev_parse_ref)
         if(VCPKG_USE_HEAD_VERSION)
             set(VCPKG_HEAD_VERSION "${rev_parse_ref}" PARENT_SCOPE)
         elseif(NOT "${rev_parse_ref}" STREQUAL "${arg_REF}")
